@@ -8,7 +8,8 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { api, ApiError } from "@/lib/api";
-import { mockClientes } from "@/lib/mock";
+import { useApi } from "@/hooks/useApi";
+import type { Cliente, Paginated, ConectarInstagramResponse } from "@/types/api";
 
 export default function ConectarInstagramPage() {
   return (
@@ -26,12 +27,28 @@ export default function ConectarInstagramPage() {
 function ConectarInstagramContent() {
   const params = useSearchParams();
   const clientePreSelecionado = params.get("cliente");
+  const stateParam = params.get("state");
   const code = params.get("code");
 
-  const [clienteId, setClienteId] = useState(clientePreSelecionado ?? "");
+  const [clienteId, setClienteId] = useState(
+    stateParam ?? clientePreSelecionado ?? "",
+  );
   const [loading, setLoading] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState(false);
+
+  const fetcherClientes = (signal: AbortSignal) =>
+    api.get<Paginated<Cliente>>("/admin/clientes?page_size=100", { signal });
+  const { data: clientesPaginated } = useApi<Paginated<Cliente>>(
+    fetcherClientes,
+    [],
+  );
+  const clientes = clientesPaginated?.items ?? [];
+
+  function getRedirectUri(): string {
+    if (typeof window === "undefined") return "";
+    return `${window.location.origin}/admin/conectar-instagram`;
+  }
 
   useEffect(() => {
     if (!code || !clienteId) return;
@@ -40,10 +57,14 @@ function ConectarInstagramContent() {
       setLoading(true);
       setErro(null);
       try {
-        await api.post("/admin/instagram/conectar", {
-          cliente_id: clienteId,
-          code,
-        });
+        await api.post<ConectarInstagramResponse>(
+          "/admin/instagram/conectar",
+          {
+            cliente_id: clienteId,
+            code,
+            redirect_uri: getRedirectUri(),
+          },
+        );
         if (!cancelled) setSucesso(true);
       } catch (err) {
         if (cancelled) return;
@@ -65,25 +86,26 @@ function ConectarInstagramContent() {
       return;
     }
     const appId = process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID ?? "";
-    const redirect =
-      typeof window !== "undefined"
-        ? `${window.location.origin}/admin/conectar-instagram?cliente=${clienteId}`
-        : "";
-    const scope = [
-      "instagram_basic",
-      "instagram_manage_insights",
-      "pages_show_list",
-      "pages_read_engagement",
-    ].join(",");
-    const url =
-      `https://www.facebook.com/v19.0/dialog/oauth?` +
-      `client_id=${appId}&redirect_uri=${encodeURIComponent(redirect)}&scope=${scope}`;
     if (!appId) {
       setErro(
         "NEXT_PUBLIC_INSTAGRAM_APP_ID não configurado. Defina em .env.local",
       );
       return;
     }
+    const redirect = getRedirectUri();
+    const scope = [
+      "instagram_business_basic",
+      "instagram_business_manage_insights",
+    ].join(",");
+    const url =
+      `https://www.instagram.com/oauth/authorize?` +
+      `client_id=${appId}` +
+      `&redirect_uri=${encodeURIComponent(redirect)}` +
+      `&response_type=code` +
+      `&scope=${encodeURIComponent(scope)}` +
+      `&state=${encodeURIComponent(clienteId)}` +
+      `&enable_fb_login=0` +
+      `&force_authentication=1`;
     window.location.href = url;
   }
 
@@ -119,7 +141,7 @@ function ConectarInstagramContent() {
             className="h-11 rounded-lg border border-ink-300 bg-surface px-3.5 text-[15px] text-ink-950 outline-none focus:border-accent-500 focus:ring-2 focus:ring-accent-500/20 disabled:opacity-60"
           >
             <option value="">Selecione um cliente…</option>
-            {mockClientes.map((c) => (
+            {clientes.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.nome_empresa}
                 {c.instagram_conectado ? " (já conectado)" : ""}

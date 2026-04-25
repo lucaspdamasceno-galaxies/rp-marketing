@@ -10,12 +10,17 @@ import { LoadingState, ErrorState } from "@/components/ui/States";
 import { api } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
 import { useUser } from "@/hooks/useUser";
+import { isDemo } from "@/lib/demo";
+import { mockDashboard } from "@/lib/mock";
 import type { DashboardData } from "@/types/api";
 
 export default function DashboardPage() {
   const { user } = useUser();
   const { data, error, loading, refetch } = useApi<DashboardData>(
-    (signal) => api.get<DashboardData>("/dashboard", { signal }),
+    (signal) =>
+      isDemo()
+        ? Promise.resolve(mockDashboard)
+        : api.get<DashboardData>("/dashboard", { signal }),
     [],
   );
 

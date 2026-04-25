@@ -3,6 +3,7 @@ import type {
   DashboardCrescimentoPonto,
   Postagem,
   Cliente,
+  Aprovacao,
 } from "@/types/api";
 
 const HOJE = new Date("2026-04-25T18:00:00-03:00");
@@ -192,6 +193,19 @@ export const mockUsuario = {
 
 export const mockClientes: Cliente[] = [
   {
+    id: "c0",
+    usuario_id: "u0",
+    nome: "RP Marketing",
+    email: "contato@rpmarketing.com.br",
+    ativo: true,
+    nome_empresa: "RP Marketing",
+    instagram_account_id: "17841400000000001",
+    instagram_conectado: true,
+    token_expires_at: diasAtras(-58),
+    created_at: diasAtras(180),
+    updated_at: diasAtras(1),
+  },
+  {
     id: "c1",
     usuario_id: "u1",
     nome: "Lucas Damasceno",
@@ -234,4 +248,99 @@ export const mockClientes: Cliente[] = [
 
 export function findCliente(id: string): Cliente | undefined {
   return mockClientes.find((c) => c.id === id);
+}
+
+export const mockAprovacoes: Aprovacao[] = [
+  {
+    id: "a1",
+    cliente_id: "c1",
+    cliente_nome_empresa: "Studio Aurora",
+    admin_id: "u-admin",
+    admin_nome: "Equipe RP",
+    tipo: "IMAGE",
+    url_midia:
+      "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",
+    legenda:
+      "Bastidores do nosso último ensaio com a equipe ✨\n\nPropostas: 3 hashtags + CTA pra agendamento.",
+    data_agendada: diasAtras(-3),
+    status: "pendente",
+    comentario_revisao: null,
+    decidido_em: null,
+    created_at: diasAtras(1),
+    updated_at: diasAtras(1),
+  },
+  {
+    id: "a2",
+    cliente_id: "c1",
+    cliente_nome_empresa: "Studio Aurora",
+    admin_id: "u-admin",
+    admin_nome: "Equipe RP",
+    tipo: "REEL",
+    url_midia:
+      "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&q=80",
+    legenda:
+      "Reel sobre tendências do mês. Áudio em alta + 3 cortes rápidos.",
+    data_agendada: diasAtras(-1),
+    status: "aprovado",
+    comentario_revisao: "Ficou ótimo, podem subir!",
+    decidido_em: diasAtras(2),
+    created_at: diasAtras(5),
+    updated_at: diasAtras(2),
+  },
+  {
+    id: "a3",
+    cliente_id: "c0",
+    cliente_nome_empresa: "RP Marketing",
+    admin_id: "u-admin",
+    admin_nome: "Equipe RP",
+    tipo: "CAROUSEL",
+    url_midia:
+      "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&q=80",
+    legenda: "Cases de cliente — versão 2 com 5 slides.",
+    data_agendada: null,
+    status: "rejeitado",
+    comentario_revisao:
+      "Trocar a foto do slide 3 — está muito escura. Ajustar copy do CTA também.",
+    decidido_em: diasAtras(3),
+    created_at: diasAtras(7),
+    updated_at: diasAtras(3),
+  },
+];
+
+export function findAprovacao(id: string): Aprovacao | undefined {
+  return mockAprovacoes.find((a) => a.id === id);
+}
+
+const FACTOR_BY_CLIENTE: Record<string, number> = {
+  c0: 1.6,
+  c1: 1.0,
+  c2: 0.4,
+  c3: 0.75,
+};
+
+export function mockDashboardFor(clienteId: string): DashboardData {
+  const f = FACTOR_BY_CLIENTE[clienteId] ?? 1.0;
+  const scale = (v: number) => Math.round(v * f);
+  return {
+    resumo: {
+      followers: scale(mockDashboard.resumo.followers),
+      total_curtidas: scale(mockDashboard.resumo.total_curtidas),
+      total_comentarios: scale(mockDashboard.resumo.total_comentarios),
+      total_alcance: scale(mockDashboard.resumo.total_alcance),
+      total_postagens: mockDashboard.resumo.total_postagens,
+    },
+    crescimento: mockDashboard.crescimento.map((p) => ({
+      data: p.data,
+      followers: scale(p.followers),
+    })),
+    ultimas_postagens: mockDashboard.ultimas_postagens.map((p) => ({
+      ...p,
+      cliente_id: clienteId,
+      curtidas: scale(p.curtidas),
+      comentarios: scale(p.comentarios),
+      alcance: scale(p.alcance),
+      impressoes: scale(p.impressoes),
+      visualizacoes: scale(p.visualizacoes),
+    })),
+  };
 }

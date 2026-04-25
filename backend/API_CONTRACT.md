@@ -1,7 +1,7 @@
 # RP Marketing — API Contract (vivo)
 
 > Documento mantido pelo agente de **backend** para o agente de **frontend**.
-> Última atualização: 2026-04-25
+> Última atualização: 2026-04-25 (migrado para Instagram API com Instagram Login)
 >
 > Base URL: `http://localhost:8000/api/v1`
 > Autenticação: header `Authorization: Bearer <jwt>`
@@ -22,7 +22,7 @@
 | Admin Clientes (CRUD)          | ✅ pronto + testado |
 | Postagens                      | ✅ pronto           |
 | Dashboard                      | ✅ pronto + testado (followers zerado até integração real com IG) |
-| Conectar Instagram             | ✅ código pronto (precisa `INSTAGRAM_APP_ID/SECRET` no `.env`) |
+| Conectar Instagram             | ✅ código pronto via **Instagram API com Instagram Login** (precisa `INSTAGRAM_APP_ID/SECRET` no `.env`) |
 | CORS + main.py + handlers      | ✅ pronto           |
 | Servidor rodando               | ✅ `http://localhost:8000` |
 
@@ -60,7 +60,7 @@ Docs interativas: `http://localhost:8000/docs` (Swagger) e `/redoc`.
 
 - Datas em ISO 8601 UTC (ex.: `2026-04-25T18:30:00Z`).
 - IDs são UUID v4 em string.
-- Métricas podem vir `0` quando o Instagram não retornou dado (campo nunca é `null`).
+- Métricas podem vir `0` quando o Instagram não retornou dado (campo nunca é `null`). Em particular, `impressoes` ficará sempre `0` — a métrica foi descontinuada pela Meta em abr/2024 para insights de mídia. Use `alcance` (reach) e `visualizacoes` (views) para análise.
 - Paginação: query `?page=1&page_size=20`. Resposta vem em `data: { items, total, page, page_size }`.
 - Validação Pydantic: status 422 com `message` resumindo o primeiro erro de campo.
 
@@ -183,13 +183,13 @@ Response 200 `{ success: true, data: null, message: "cliente removido" }`. Casca
 #### `POST /api/v1/admin/instagram/conectar`
 Request:
 ```json
-{ "cliente_id": "uuid", "code": "<oauth-code-do-meta>", "redirect_uri": "opcional" }
+{ "cliente_id": "uuid", "code": "<oauth-code-do-instagram>", "redirect_uri": "opcional" }
 ```
 Response 200 `data`:
 ```json
-{ "cliente_id": "uuid", "instagram_account_id": "1784...", "token_expires_at": "2026-06-25T..." }
+{ "cliente_id": "uuid", "instagram_account_id": "17841412345", "token_expires_at": "2026-06-25T..." }
 ```
-Backend: troca `code` por short token → long-lived token → descobre IG Business Account vinculado à página → salva. Erro 400 se OAuth falhar.
+Backend: troca `code` por short-lived token → long-lived (60 dias). O `user_id` retornado pelo OAuth **é** o ID da conta Instagram Business — não passa por Página do Facebook. Erro 400 se OAuth falhar.
 
 #### `POST /api/v1/admin/instagram/sync/{cliente_id}`
 Response 200 `data`: `{ "postagens_novas": 7 }`. Busca últimas 25 mídias e atualiza no banco.
@@ -252,7 +252,20 @@ Response 200 `data`: `{ "postagens_novas": 7 }`. Busca últimas 25 mídias e atu
 3. **Recuperar senha**: form → `POST /auth/recuperar-senha`. Tela de novo password recebe `?token=` da URL → `POST /auth/redefinir-senha`.
 4. **Dashboard cliente**: `GET /dashboard` no mount. Renderizar resumo + gráfico de crescimento + lista de últimas postagens (clicar abre `/postagens/[id]`).
 5. **Lista postagens**: `GET /postagens?periodo_inicio=&periodo_fim=&ordenar_por=`. Filtros aplicam re-fetch.
-6. **Admin / Conectar Instagram**: o botão abre OAuth do Meta (URL gerada no frontend usando `INSTAGRAM_APP_ID` público + scopes `instagram_basic,pages_show_list,pages_read_engagement,instagram_manage_insights`). Callback recebe `code` → frontend chama `POST /admin/instagram/conectar` com `cliente_id` + `code` + `redirect_uri`.
+6. **Admin / Conectar Instagram**: o botão abre OAuth do **Instagram** (não do Facebook). URL gerada no frontend:
+   ```
+   https://www.instagram.com/oauth/authorize
+     ?client_id={NEXT_PUBLIC_INSTAGRAM_APP_ID}
+     &redirect_uri={origin}/admin/conectar-instagram
+     &response_type=code
+     &scope=instagram_business_basic,instagram_business_manage_insights
+     &state={cliente_id}
+     &enable_fb_login=0
+     &force_authentication=1
+   ```
+   - **Use `state` para passar o `cliente_id`**, não query string no `redirect_uri`. O Instagram exige match exato do `redirect_uri` registrado, então acoplar `?cliente=...` na URL é frágil/quebra.
+   - Callback chega em `?code=...&state={cliente_id}` → frontend lê `state`, chama `POST /admin/instagram/conectar` com `cliente_id` + `code` + `redirect_uri` (sem query string).
+   - Pré-requisito do cliente: conta Instagram **Business** ou **Creator**. Não precisa mais de Página do Facebook vinculada.
 
 ---
 

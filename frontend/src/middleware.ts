@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PUBLIC_PATHS = ["/login", "/recuperar-senha"];
+const PUBLIC_PATHS = ["/login", "/recuperar-senha", "/redefinir-senha"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -28,6 +28,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!api|_next/static|_next/image|favicon.ico|next.svg|vercel.svg).*)",
+    "/((?!api|_next/static|_next/image|.*\\..*).*)",
   ],
 };

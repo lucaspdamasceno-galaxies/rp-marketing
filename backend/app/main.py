@@ -3,7 +3,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
-from app.api import auth, clientes, dashboard, instagram, postagens
+from app.api import aprovacoes, auth, clientes, dashboard, instagram, postagens
 from app.core.config import settings
 
 app = FastAPI(
@@ -56,3 +56,5 @@ app.include_router(dashboard.router, prefix=api)
 app.include_router(postagens.router, prefix=api)
 app.include_router(clientes.router, prefix=api)
 app.include_router(instagram.router, prefix=api)
+app.include_router(aprovacoes.cliente_router, prefix=api)
+app.include_router(aprovacoes.admin_router, prefix=api)

@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { setToken, setUsuarioMe } from "@/lib/auth";
+import { DEMO_TOKEN, demoUser } from "@/lib/demo";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { AuthShell } from "@/components/layout/AuthShell";
@@ -67,6 +68,12 @@ function LoginForm() {
     setError(null);
   }
 
+  function entrarNoDemo() {
+    setToken(DEMO_TOKEN);
+    setUsuarioMe(demoUser);
+    router.replace("/dashboard");
+  }
+
   return (
     <div>
       <div className="mb-8">
@@ -125,24 +132,40 @@ function LoginForm() {
 
       <div className="mt-8 flex items-center gap-3 text-xs text-ink-400">
         <span className="h-px flex-1 bg-ink-200" />
-        credenciais de teste
+        ou
         <span className="h-px flex-1 bg-ink-200" />
       </div>
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <button
+        type="button"
+        onClick={entrarNoDemo}
+        className="mt-4 inline-flex h-11 w-full items-center justify-center gap-2 rounded-lg border border-ink-200 bg-surface text-sm font-medium text-ink-700 transition hover:bg-ink-100"
+      >
+        <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4 text-accent-500">
+          <path
+            d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+          />
+        </svg>
+        Ver demonstração
+      </button>
+
+      <div className="mt-4 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => preencherSeed("cliente")}
-          className="inline-flex h-10 items-center justify-center rounded-lg border border-ink-200 bg-surface text-xs font-medium text-ink-700 transition hover:bg-ink-100"
+          className="inline-flex h-9 items-center justify-center rounded-lg border border-dashed border-ink-200 text-xs font-medium text-ink-500 transition hover:bg-ink-100 hover:text-ink-950"
         >
-          Como Cliente
+          Preencher: Cliente
         </button>
         <button
           type="button"
           onClick={() => preencherSeed("admin")}
-          className="inline-flex h-10 items-center justify-center rounded-lg border border-ink-200 bg-surface text-xs font-medium text-ink-700 transition hover:bg-ink-100"
+          className="inline-flex h-9 items-center justify-center rounded-lg border border-dashed border-ink-200 text-xs font-medium text-ink-500 transition hover:bg-ink-100 hover:text-ink-950"
         >
-          Como Admin
+          Preencher: Admin
         </button>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { clearToken, getToken, getUsuario, setUsuarioMe } from "@/lib/auth";
+import { DEMO_TOKEN, demoUser } from "@/lib/demo";
 import type { UsuarioMe } from "@/types/api";
 
 type State = {
@@ -23,6 +24,11 @@ export function useUser(): State {
     if (!token) {
       setState({ user: null, loading: false });
       router.replace("/login");
+      return;
+    }
+    if (token === DEMO_TOKEN) {
+      setUsuarioMe(demoUser);
+      setState({ user: demoUser, loading: false });
       return;
     }
     let cancelled = false;

@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { LoadingState, ErrorState } from "@/components/ui/States";
 import { api } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
+import { isDemo } from "@/lib/demo";
+import { mockPostagens } from "@/lib/mock";
 import type {
   OrdenarPostagensPor,
   Paginated,
@@ -28,7 +30,21 @@ export default function PostagensPage() {
   const [ordem, setOrdem] = useState<OrdenarPostagensPor>("data");
 
   const fetcher = useCallback(
-    (signal: AbortSignal) => {
+    (signal: AbortSignal): Promise<Paginated<Postagem>> => {
+      if (isDemo()) {
+        const items = [...mockPostagens].sort((a, b) =>
+          ordem === "engajamento"
+            ? b.curtidas + b.comentarios - (a.curtidas + a.comentarios)
+            : new Date(b.data_publicacao).getTime() -
+              new Date(a.data_publicacao).getTime(),
+        );
+        return Promise.resolve({
+          items,
+          total: items.length,
+          page: 1,
+          page_size: items.length,
+        });
+      }
       const params = new URLSearchParams({
         ordenar_por: ordem,
         page_size: "60",

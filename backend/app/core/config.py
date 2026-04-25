@@ -13,7 +13,7 @@ class Settings(BaseSettings):
 
     INSTAGRAM_APP_ID: str = ""
     INSTAGRAM_APP_SECRET: str = ""
-    INSTAGRAM_REDIRECT_URI: str = "http://localhost:3000/admin/conectar-instagram/callback"
+    INSTAGRAM_REDIRECT_URI: str = "http://localhost:3000/admin/conectar-instagram"
 
     CORS_ORIGINS: str = "http://localhost:3000"
 

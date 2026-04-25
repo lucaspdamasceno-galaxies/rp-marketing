@@ -6,8 +6,10 @@ import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { LoadingState, ErrorState } from "@/components/ui/States";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
+import { isDemo } from "@/lib/demo";
+import { findPostagem } from "@/lib/mock";
 import {
   formatCompact,
   formatDateTime,
@@ -30,7 +32,15 @@ export default function PostagemDetalhePage({
   const { id } = use(params);
 
   const fetcher = useCallback(
-    (signal: AbortSignal) => api.get<Postagem>(`/postagens/${id}`, { signal }),
+    (signal: AbortSignal) => {
+      if (isDemo()) {
+        const p = findPostagem(id);
+        return p
+          ? Promise.resolve(p)
+          : Promise.reject(new ApiError("Postagem não encontrada", 404));
+      }
+      return api.get<Postagem>(`/postagens/${id}`, { signal });
+    },
     [id],
   );
   const { data: postagem, error, loading, refetch } = useApi<Postagem>(

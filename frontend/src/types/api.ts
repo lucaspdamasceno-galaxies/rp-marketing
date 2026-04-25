@@ -61,6 +61,37 @@ export type SyncInstagramResponse = {
   postagens_novas: number;
 };
 
+export type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
+
+export type Aprovacao = {
+  id: string;
+  cliente_id: string;
+  cliente_nome_empresa: string | null;
+  admin_id: string;
+  admin_nome: string | null;
+  tipo: TipoPostagem;
+  url_midia: string;
+  legenda: string | null;
+  data_agendada: string | null;
+  status: StatusAprovacao;
+  comentario_revisao: string | null;
+  decidido_em: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type AprovacaoCreate = {
+  cliente_id: string;
+  tipo: TipoPostagem;
+  url_midia: string;
+  legenda?: string | null;
+  data_agendada?: string | null;
+};
+
+export type AprovacaoDecisao = {
+  comentario?: string | null;
+};
+
 export type TipoPostagem = "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL";
 
 export type Postagem = {

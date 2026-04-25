@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/Input";
 import { LoadingState, ErrorState } from "@/components/ui/States";
 import { api, ApiError } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
+import { isDemo } from "@/lib/demo";
+import { mockClientes } from "@/lib/mock";
 import { formatDate } from "@/lib/format";
 import type { Cliente, Paginated } from "@/types/api";
 
@@ -19,7 +21,24 @@ export default function AdminClientesPage() {
   const [erroAcao, setErroAcao] = useState<string | null>(null);
 
   const fetcher = useCallback(
-    (signal: AbortSignal) => {
+    (signal: AbortSignal): Promise<Paginated<Cliente>> => {
+      if (isDemo()) {
+        const q = busca.trim().toLowerCase();
+        const items = q
+          ? mockClientes.filter(
+              (c) =>
+                c.nome.toLowerCase().includes(q) ||
+                c.email.toLowerCase().includes(q) ||
+                c.nome_empresa.toLowerCase().includes(q),
+            )
+          : mockClientes;
+        return Promise.resolve({
+          items,
+          total: items.length,
+          page: 1,
+          page_size: items.length,
+        });
+      }
       const params = new URLSearchParams({ page_size: "50" });
       if (busca.trim()) params.set("q", busca.trim());
       return api.get<Paginated<Cliente>>(
@@ -42,8 +61,12 @@ export default function AdminClientesPage() {
     setErroAcao(null);
     setRemovendo(id);
     try {
-      await api.delete(`/admin/clientes/${id}`);
-      refetch();
+      if (isDemo()) {
+        setErroAcao("Modo demonstração: ações destrutivas estão desabilitadas.");
+      } else {
+        await api.delete(`/admin/clientes/${id}`);
+        refetch();
+      }
     } catch (err) {
       const message =
         err instanceof ApiError ? err.message : "Erro ao remover cliente";

@@ -4,9 +4,15 @@ import { useRouter } from "next/navigation";
 import { clearToken } from "@/lib/auth";
 import { useUser } from "@/hooks/useUser";
 
+type DisplayUser = {
+  nome?: string | null;
+  email?: string | null;
+};
+
 type TopbarProps = {
   title: string;
   subtitle?: string;
+  userOverride?: DisplayUser;
 };
 
 function iniciais(nome?: string | null): string {
@@ -17,9 +23,10 @@ function iniciais(nome?: string | null): string {
   return (first + last).toUpperCase() || "··";
 }
 
-export function Topbar({ title, subtitle }: TopbarProps) {
+export function Topbar({ title, subtitle, userOverride }: TopbarProps) {
   const router = useRouter();
-  const { user } = useUser();
+  const { user: real } = useUser();
+  const user = userOverride ?? real;
 
   function handleLogout() {
     clearToken();
