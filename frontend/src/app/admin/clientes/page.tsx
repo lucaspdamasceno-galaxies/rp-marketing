@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { AdminShell } from "@/components/layout/AdminShell";
+import { AgendarSyncModal } from "@/components/admin/AgendarSyncModal";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -12,13 +13,16 @@ import { api, ApiError } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
 import { isDemo } from "@/lib/demo";
 import { mockClientes } from "@/lib/mock";
-import { formatDate } from "@/lib/format";
-import type { Cliente, Paginated } from "@/types/api";
+import { formatDate, formatRelative } from "@/lib/format";
+import type { Cliente, Paginated, SyncInstagramResponse } from "@/types/api";
 
 export default function AdminClientesPage() {
   const [busca, setBusca] = useState("");
   const [removendo, setRemovendo] = useState<string | null>(null);
+  const [sincronizando, setSincronizando] = useState<string | null>(null);
   const [erroAcao, setErroAcao] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [agendarCliente, setAgendarCliente] = useState<Cliente | null>(null);
 
   const fetcher = useCallback(
     (signal: AbortSignal): Promise<Paginated<Cliente>> => {
@@ -59,6 +63,7 @@ export default function AdminClientesPage() {
       return;
     }
     setErroAcao(null);
+    setFeedback(null);
     setRemovendo(id);
     try {
       if (isDemo()) {
@@ -73,6 +78,28 @@ export default function AdminClientesPage() {
       setErroAcao(message);
     } finally {
       setRemovendo(null);
+    }
+  }
+
+  async function handleSincronizar(c: Cliente) {
+    setErroAcao(null);
+    setFeedback(null);
+    setSincronizando(c.id);
+    try {
+      const resp = await api.post<SyncInstagramResponse>(
+        `/admin/instagram/sync/${c.id}`,
+        {},
+      );
+      setFeedback(
+        `Sync de ${c.nome_empresa}: ${resp.postagens_novas} postagens novas, ${resp.followers} seguidores.`,
+      );
+      refetch();
+    } catch (err) {
+      const message =
+        err instanceof ApiError ? err.message : "Erro ao sincronizar";
+      setErroAcao(`${c.nome_empresa}: ${message}`);
+    } finally {
+      setSincronizando(null);
     }
   }
 
@@ -108,6 +135,15 @@ export default function AdminClientesPage() {
           </div>
         )}
 
+        {feedback && (
+          <div
+            role="status"
+            className="rounded-lg border border-success-100 bg-success-100/40 px-3 py-2.5 text-sm text-success-500"
+          >
+            {feedback}
+          </div>
+        )}
+
         {loading ? (
           <LoadingState label="Carregando clientes…" />
         ) : error ? (
@@ -124,12 +160,13 @@ export default function AdminClientesPage() {
         ) : (
           <Card padded={false} className="overflow-hidden">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[760px] text-left">
+              <table className="w-full min-w-[920px] text-left">
                 <thead className="border-b border-ink-200 bg-ink-50/60 text-xs font-semibold uppercase tracking-wide text-ink-500">
                   <tr>
                     <th className="px-6 py-3">Empresa</th>
                     <th className="px-6 py-3">Responsável</th>
                     <th className="px-6 py-3">Instagram</th>
+                    <th className="px-6 py-3">Sync</th>
                     <th className="px-6 py-3">Cadastrado em</th>
                     <th className="px-6 py-3 text-right">Ações</th>
                   </tr>
@@ -158,11 +195,44 @@ export default function AdminClientesPage() {
                           <Badge tone="warning">Pendente</Badge>
                         )}
                       </td>
+                      <td className="px-6 py-4">
+                        {c.sync_cron ? (
+                          <code className="rounded bg-ink-100 px-1.5 py-0.5 text-xs text-ink-700">
+                            {c.sync_cron}
+                          </code>
+                        ) : (
+                          <span className="text-xs text-ink-400">manual</span>
+                        )}
+                        {c.last_sync_at && (
+                          <p className="mt-1 text-[11px] text-ink-500">
+                            última: {formatRelative(c.last_sync_at)}
+                          </p>
+                        )}
+                      </td>
                       <td className="px-6 py-4 text-ink-700 tabular-nums">
                         {formatDate(c.created_at)}
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex items-center justify-end gap-2">
+                          {c.instagram_conectado && (
+                            <>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                loading={sincronizando === c.id}
+                                onClick={() => handleSincronizar(c)}
+                              >
+                                Sincronizar
+                              </Button>
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setAgendarCliente(c)}
+                              >
+                                Agendar
+                              </Button>
+                            </>
+                          )}
                           <Link href={`/admin/clientes/${c.id}`}>
                             <Button variant="secondary" size="sm">
                               Editar
@@ -186,6 +256,13 @@ export default function AdminClientesPage() {
           </Card>
         )}
       </div>
+
+      <AgendarSyncModal
+        cliente={agendarCliente}
+        open={!!agendarCliente}
+        onClose={() => setAgendarCliente(null)}
+        onSaved={() => refetch()}
+      />
     </AdminShell>
   );
 }

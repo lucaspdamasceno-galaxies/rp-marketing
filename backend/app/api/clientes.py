@@ -1,3 +1,4 @@
+from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -5,7 +6,8 @@ from fastapi import APIRouter, HTTPException, Query, status
 from app.api.deps import AdminUser, DbSession
 from app.schemas.cliente import ClienteCreate, ClienteOut, ClienteUpdate
 from app.schemas.common import Envelope, Page
-from app.services import cliente_service
+from app.schemas.dashboard import DashboardOut
+from app.services import cliente_service, dashboard_service
 
 router = APIRouter(prefix="/admin/clientes", tags=["admin/clientes"])
 
@@ -65,3 +67,21 @@ def remover_cliente(cliente_id: UUID, _: AdminUser, db: DbSession) -> Envelope[N
         raise HTTPException(status_code=404, detail="cliente não encontrado")
     cliente_service.remover(db, cliente)
     return Envelope(message="cliente removido")
+
+
+@router.get("/{cliente_id}/dashboard", response_model=Envelope[DashboardOut])
+def dashboard_do_cliente(
+    cliente_id: UUID,
+    _: AdminUser,
+    db: DbSession,
+    periodo_inicio: datetime | None = Query(default=None),
+    periodo_fim: datetime | None = Query(default=None),
+) -> Envelope[DashboardOut]:
+    cliente = cliente_service.buscar(db, cliente_id)
+    if not cliente:
+        raise HTTPException(status_code=404, detail="cliente não encontrado")
+    return Envelope(
+        data=dashboard_service.montar_dashboard(
+            db, cliente.id, periodo_inicio=periodo_inicio, periodo_fim=periodo_fim
+        )
+    )

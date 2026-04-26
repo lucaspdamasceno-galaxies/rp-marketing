@@ -29,6 +29,8 @@ class ClienteOut(BaseModel):
     instagram_account_id: str | None = None
     instagram_conectado: bool = False
     token_expires_at: datetime | None = None
+    sync_cron: str | None = None
+    last_sync_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 

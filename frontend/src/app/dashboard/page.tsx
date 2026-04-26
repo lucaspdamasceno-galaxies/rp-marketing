@@ -1,52 +1,103 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { KpiCard } from "@/components/dashboard/KpiCard";
 import { GrowthChart } from "@/components/dashboard/GrowthChart";
 import { PostagemCard } from "@/components/dashboard/PostagemCard";
+import {
+  PeriodoFiltro,
+  periodoLabel,
+  periodoPadrao,
+  type Periodo,
+} from "@/components/dashboard/PeriodoFiltro";
 import { LoadingState, ErrorState } from "@/components/ui/States";
 import { api } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
 import { useUser } from "@/hooks/useUser";
 import { isDemo } from "@/lib/demo";
 import { mockDashboard } from "@/lib/mock";
+import { formatRelative } from "@/lib/format";
 import type { DashboardData } from "@/types/api";
 
 export default function DashboardPage() {
   const { user } = useUser();
-  const { data, error, loading, refetch } = useApi<DashboardData>(
-    (signal) =>
-      isDemo()
-        ? Promise.resolve(mockDashboard)
-        : api.get<DashboardData>("/dashboard", { signal }),
-    [],
+  const [periodo, setPeriodo] = useState<Periodo>(() => periodoPadrao());
+
+  const fetcher = useMemo(
+    () => (signal: AbortSignal) => {
+      if (isDemo()) return Promise.resolve(mockDashboard);
+      const params = new URLSearchParams({
+        periodo_inicio: periodo.inicio,
+        periodo_fim: periodo.fim,
+      });
+      return api.get<DashboardData>(`/dashboard?${params.toString()}`, { signal });
+    },
+    [periodo.inicio, periodo.fim],
   );
+
+  const { data, error, loading, refetch } = useApi<DashboardData>(fetcher, [
+    periodo.inicio,
+    periodo.fim,
+  ]);
 
   const primeiroNome = user?.nome?.split(" ")[0] ?? "";
 
   return (
     <AppShell
       title={primeiroNome ? `Olá, ${primeiroNome} 👋` : "Dashboard"}
-      subtitle="Visão geral dos seus últimos 30 dias no Instagram"
+      subtitle="Visão geral do seu Instagram"
     >
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <PeriodoFiltro periodo={periodo} onChange={setPeriodo} />
+        {data?.last_sync_at && (
+          <p className="text-xs text-ink-500">
+            Última sincronização:{" "}
+            <span className="font-medium text-ink-700">
+              {formatRelative(data.last_sync_at)}
+            </span>
+          </p>
+        )}
+      </div>
       {loading ? (
         <LoadingState label="Carregando dashboard…" />
       ) : error ? (
         <ErrorState message={error} onRetry={refetch} />
       ) : data ? (
-        <DashboardContent data={data} />
+        <DashboardContent data={data} periodoTexto={periodoLabel(periodo)} />
       ) : null}
     </AppShell>
   );
 }
 
-function DashboardContent({ data }: { data: DashboardData }) {
+function DashboardContent({
+  data,
+  periodoTexto,
+}: {
+  data: DashboardData;
+  periodoTexto: string;
+}) {
   const destaque = data.ultimas_postagens[0];
+  const periodoVazio = data.resumo.total_postagens === 0;
 
   return (
     <div className="flex flex-col gap-8">
+      {periodoVazio && (
+        <div
+          role="status"
+          className="rounded-lg border border-warning-100 bg-warning-100/40 px-4 py-3 text-sm text-ink-700"
+        >
+          Nenhuma postagem encontrada em <b>{periodoTexto}</b>. Curtidas,
+          comentários e alcance abaixo aparecerão zerados. Tente um período
+          maior ou veja todas em{" "}
+          <Link className="font-medium text-brand-700 hover:underline" href="/postagens">
+            /postagens
+          </Link>
+          .
+        </div>
+      )}
       <section
         aria-label="Métricas resumidas"
         className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
@@ -54,25 +105,25 @@ function DashboardContent({ data }: { data: DashboardData }) {
         <KpiCard
           label="Seguidores"
           value={data.resumo.followers}
-          context="Conta Instagram conectada"
+          context="Snapshot mais recente"
           icon={<IconUsers />}
         />
         <KpiCard
           label="Curtidas"
           value={data.resumo.total_curtidas}
-          context="Soma das postagens recentes"
+          context={`Soma ${periodoTexto.toLowerCase()}`}
           icon={<IconHeart />}
         />
         <KpiCard
           label="Comentários"
           value={data.resumo.total_comentarios}
-          context="Engajamento direto do público"
+          context={`Soma ${periodoTexto.toLowerCase()}`}
           icon={<IconComment />}
         />
         <KpiCard
           label="Alcance"
           value={data.resumo.total_alcance}
-          context="Contas únicas atingidas"
+          context={`Soma ${periodoTexto.toLowerCase()}`}
           icon={<IconReach />}
         />
       </section>
@@ -82,7 +133,7 @@ function DashboardContent({ data }: { data: DashboardData }) {
         className="grid grid-cols-1 gap-6 lg:grid-cols-3"
       >
         <div className="lg:col-span-2">
-          <GrowthChart data={data.crescimento} />
+          <GrowthChart data={data.crescimento} periodoLabel={periodoTexto} />
         </div>
         {destaque ? (
           <Card className="flex flex-col gap-4">

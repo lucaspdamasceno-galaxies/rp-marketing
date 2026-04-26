@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 
 from pydantic import BaseModel
 
@@ -22,3 +22,4 @@ class DashboardOut(BaseModel):
     resumo: DashboardResumo
     crescimento: list[PontoCrescimento]
     ultimas_postagens: list[PostagemOut]
+    last_sync_at: datetime | None = None

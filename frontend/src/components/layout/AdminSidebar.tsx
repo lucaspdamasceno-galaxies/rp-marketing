@@ -77,11 +77,44 @@ const NAV: NavItem[] = [
   },
 ];
 
-export function AdminSidebar() {
-  const pathname = usePathname();
+type AdminSidebarProps = {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+};
 
+function NavList({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
   return (
-    <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:border-r lg:border-ink-200 lg:bg-surface">
+    <ul className="flex flex-col gap-1">
+      {NAV.map((item) => {
+        const active =
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
+        return (
+          <li key={item.href}>
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                active
+                  ? "bg-brand-50 text-brand-700"
+                  : "text-ink-700 hover:bg-ink-100"
+              }`}
+            >
+              <span className={active ? "text-accent-500" : "text-ink-500"}>
+                {item.icon}
+              </span>
+              {item.label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <>
       <div className="flex h-16 items-center px-6">
         <Logo size="sm" />
       </div>
@@ -91,33 +124,12 @@ export function AdminSidebar() {
         </span>
       </div>
       <nav className="flex-1 px-3 pt-4">
-        <ul className="flex flex-col gap-1">
-          {NAV.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                    active
-                      ? "bg-brand-50 text-brand-700"
-                      : "text-ink-700 hover:bg-ink-100"
-                  }`}
-                >
-                  <span className={active ? "text-accent-500" : "text-ink-500"}>
-                    {item.icon}
-                  </span>
-                  {item.label}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <NavList onNavigate={onNavigate} />
       </nav>
       <div className="border-t border-ink-200 p-4">
         <Link
           href="/dashboard"
+          onClick={onNavigate}
           className="flex items-center gap-2 text-xs font-medium text-ink-500 hover:text-ink-950"
         >
           <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
@@ -132,6 +144,39 @@ export function AdminSidebar() {
           Voltar ao painel do cliente
         </Link>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export function AdminSidebar({ mobileOpen = false, onMobileClose }: AdminSidebarProps) {
+  return (
+    <>
+      <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:border-r lg:border-ink-200 lg:bg-surface">
+        <SidebarBody />
+      </aside>
+
+      <div
+        className={`fixed inset-0 z-40 lg:hidden ${
+          mobileOpen ? "" : "pointer-events-none"
+        }`}
+        aria-hidden={!mobileOpen}
+      >
+        <div
+          className={`absolute inset-0 bg-ink-950/40 backdrop-blur-sm transition-opacity ${
+            mobileOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={onMobileClose}
+        />
+        <aside
+          className={`absolute left-0 top-0 flex h-full w-72 flex-col border-r border-ink-200 bg-surface shadow-xl transition-transform ${
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+          role="dialog"
+          aria-label="Menu admin"
+        >
+          <SidebarBody onNavigate={onMobileClose} />
+        </aside>
+      </div>
+    </>
   );
 }

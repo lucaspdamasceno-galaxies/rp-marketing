@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.core.config import settings
 from app.models.cliente import Cliente
+from app.models.followers_snapshot import FollowersSnapshot
 from app.models.postagem import Postagem, TipoPostagem
 
 IG_OAUTH_BASE = "https://api.instagram.com"
@@ -85,9 +86,30 @@ def conectar_cliente(
     return cliente
 
 
-def sincronizar_postagens(db: Session, cliente: Cliente, limit: int = 25) -> int:
+def buscar_followers_count(access_token: str, instagram_account_id: str) -> int:
+    with httpx.Client(timeout=15.0) as client:
+        resp = client.get(
+            f"{IG_GRAPH}/{instagram_account_id}",
+            params={"fields": "followers_count,media_count", "access_token": access_token},
+        )
+        if resp.status_code != 200:
+            raise InstagramError(f"falha ao buscar followers_count: {resp.text}")
+        return int(resp.json().get("followers_count") or 0)
+
+
+def sincronizar_postagens(db: Session, cliente: Cliente, limit: int = 25) -> dict:
+    """Sincroniza followers + mídias. Retorna {postagens_novas, followers}."""
     if not cliente.access_token or not cliente.instagram_account_id:
         raise InstagramError("cliente sem Instagram conectado")
+
+    followers = buscar_followers_count(cliente.access_token, cliente.instagram_account_id)
+    db.add(
+        FollowersSnapshot(
+            cliente_id=cliente.id,
+            followers_count=followers,
+            coletado_em=datetime.now(timezone.utc),
+        )
+    )
 
     fields = (
         "id,caption,media_type,media_product_type,media_url,permalink,"
@@ -121,18 +143,22 @@ def sincronizar_postagens(db: Session, cliente: Cliente, limit: int = 25) -> int
                 .one_or_none()
             )
 
+            if tipo in (TipoPostagem.VIDEO, TipoPostagem.REEL):
+                url_midia = item.get("thumbnail_url") or item.get("media_url") or ""
+            else:
+                url_midia = item.get("media_url") or item.get("thumbnail_url") or ""
+
             valores = {
                 "cliente_id": cliente.id,
                 "instagram_media_id": media_id,
                 "tipo": tipo,
-                "url_midia": item.get("media_url") or item.get("thumbnail_url") or "",
+                "url_midia": url_midia,
                 "permalink": item.get("permalink"),
                 "legenda": item.get("caption"),
                 "curtidas": int(item.get("like_count") or 0),
                 "comentarios": int(item.get("comments_count") or 0),
                 "visualizacoes": int(insights.get("views") or 0),
                 "alcance": int(insights.get("reach") or 0),
-                "impressoes": 0,
                 "data_publicacao": _parse_iso(item.get("timestamp")),
             }
 
@@ -143,8 +169,9 @@ def sincronizar_postagens(db: Session, cliente: Cliente, limit: int = 25) -> int
                 db.add(Postagem(**valores))
                 salvas += 1
 
+    cliente.last_sync_at = datetime.now(timezone.utc)
     db.commit()
-    return salvas
+    return {"postagens_novas": salvas, "followers": followers}
 
 
 def _resolver_tipo(media_type: str | None, media_product_type: str | None) -> TipoPostagem:

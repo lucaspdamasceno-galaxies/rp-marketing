@@ -18,7 +18,6 @@ class PostagemOut(BaseModel):
     comentarios: int
     visualizacoes: int
     alcance: int
-    impressoes: int
     data_publicacao: datetime
     created_at: datetime
     updated_at: datetime

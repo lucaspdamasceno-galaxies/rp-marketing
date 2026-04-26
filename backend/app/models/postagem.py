@@ -35,15 +35,14 @@ class Postagem(Base):
     tipo: Mapped[TipoPostagem] = mapped_column(
         Enum(TipoPostagem, name="tipo_postagem"), nullable=False
     )
-    url_midia: Mapped[str] = mapped_column(String(1024), nullable=False)
-    permalink: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    url_midia: Mapped[str] = mapped_column(Text, nullable=False)
+    permalink: Mapped[str | None] = mapped_column(Text, nullable=True)
     legenda: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     curtidas: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     comentarios: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     visualizacoes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     alcance: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
-    impressoes: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
 
     data_publicacao: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True

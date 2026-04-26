@@ -20,6 +20,14 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     API_V1_PREFIX: str = "/api/v1"
 
+    # Cloud Scheduler — opcional em dev. Em produção precisam estar setados
+    # para o agendamento por cliente funcionar.
+    GCP_PROJECT_ID: str = ""
+    GCP_LOCATION: str = "southamerica-east1"
+    SCHEDULER_TIMEZONE: str = "America/Sao_Paulo"
+    SCHEDULER_TARGET_BASE_URL: str = ""
+    INTERNAL_SYNC_TOKEN: str = ""
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]

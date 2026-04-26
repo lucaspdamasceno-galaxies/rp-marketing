@@ -98,6 +98,8 @@ def to_out_dict(cliente: Cliente) -> dict:
         "instagram_account_id": cliente.instagram_account_id,
         "instagram_conectado": cliente.instagram_account_id is not None,
         "token_expires_at": cliente.token_expires_at,
+        "sync_cron": cliente.sync_cron,
+        "last_sync_at": cliente.last_sync_at,
         "created_at": cliente.created_at,
         "updated_at": cliente.updated_at,
     }

@@ -5,6 +5,7 @@ type Point = { data: string; followers: number };
 
 type GrowthChartProps = {
   data: Point[];
+  periodoLabel?: string;
 };
 
 const W = 760;
@@ -13,11 +14,16 @@ const PAD_X = 32;
 const PAD_TOP = 24;
 const PAD_BOTTOM = 32;
 
-export function GrowthChart({ data }: GrowthChartProps) {
+export function GrowthChart({ data, periodoLabel = "no período" }: GrowthChartProps) {
   if (data.length === 0) {
     return (
       <Card>
-        <p className="text-sm text-ink-500">Sem dados ainda.</p>
+        <p className="text-sm font-medium text-ink-500">Crescimento</p>
+        <p className="text-xl font-semibold text-ink-950">{periodoLabel}</p>
+        <p className="mt-6 text-sm text-ink-500">
+          Sem snapshots de seguidores nesse período. Sincronize a conta ou
+          escolha um período mais amplo.
+        </p>
       </Card>
     );
   }
@@ -52,16 +58,18 @@ export function GrowthChart({ data }: GrowthChartProps) {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-sm font-medium text-ink-500">Crescimento</p>
-          <p className="text-xl font-semibold text-ink-950">
-            Últimos 30 dias
-          </p>
+          <p className="text-xl font-semibold text-ink-950">{periodoLabel}</p>
         </div>
         <div className="text-right">
           <p className="text-2xl font-semibold tabular-nums">
-            +{formatCompact(delta)}
+            {delta >= 0 ? "+" : ""}
+            {formatCompact(delta)}
           </p>
-          <p className="text-xs text-success-500">
-            +{deltaPct.toFixed(1)}% no período
+          <p
+            className={`text-xs ${delta >= 0 ? "text-success-500" : "text-danger-500"}`}
+          >
+            {delta >= 0 ? "+" : ""}
+            {Number.isFinite(deltaPct) ? deltaPct.toFixed(1) : "0.0"}% no período
           </p>
         </div>
       </div>
@@ -71,7 +79,7 @@ export function GrowthChart({ data }: GrowthChartProps) {
           viewBox={`0 0 ${W} ${H}`}
           className="block min-w-[640px] w-full text-accent-500"
           role="img"
-          aria-label="Gráfico de crescimento de seguidores nos últimos 30 dias"
+          aria-label={`Gráfico de crescimento de seguidores ${periodoLabel}`}
         >
           <defs>
             <linearGradient id="growth-fill" x1="0" y1="0" x2="0" y2="1">

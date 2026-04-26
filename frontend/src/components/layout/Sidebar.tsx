@@ -78,52 +78,61 @@ const NAV: NavItem[] = [
   },
 ];
 
-export function Sidebar() {
-  const pathname = usePathname();
+type SidebarProps = {
+  mobileOpen?: boolean;
+  onMobileClose?: () => void;
+};
 
+function NavList({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
   return (
-    <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:border-r lg:border-ink-200 lg:bg-surface">
+    <ul className="flex flex-col gap-1">
+      {NAV.map((item) => {
+        const active =
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
+        return (
+          <li key={item.href}>
+            <Link
+              href={item.soon ? "#" : item.href}
+              onClick={item.soon ? (e) => e.preventDefault() : onNavigate}
+              aria-disabled={item.soon}
+              className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+                active
+                  ? "bg-brand-50 text-brand-700"
+                  : item.soon
+                    ? "text-ink-400 hover:bg-ink-100/50"
+                    : "text-ink-700 hover:bg-ink-100"
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                <span
+                  className={active ? "text-accent-500" : "text-ink-500"}
+                >
+                  {item.icon}
+                </span>
+                {item.label}
+              </span>
+              {item.soon && (
+                <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
+                  em breve
+                </span>
+              )}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
+  return (
+    <>
       <div className="flex h-16 items-center px-6">
         <Logo size="sm" />
       </div>
       <nav className="flex-1 px-3 pt-4">
-        <ul className="flex flex-col gap-1">
-          {NAV.map((item) => {
-            const active =
-              pathname === item.href || pathname.startsWith(`${item.href}/`);
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.soon ? "#" : item.href}
-                  aria-disabled={item.soon}
-                  className={`flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                    active
-                      ? "bg-brand-50 text-brand-700"
-                      : item.soon
-                        ? "text-ink-400 hover:bg-ink-100/50"
-                        : "text-ink-700 hover:bg-ink-100"
-                  }`}
-                >
-                  <span className="flex items-center gap-3">
-                    <span
-                      className={
-                        active ? "text-accent-500" : "text-ink-500"
-                      }
-                    >
-                      {item.icon}
-                    </span>
-                    {item.label}
-                  </span>
-                  {item.soon && (
-                    <span className="rounded-full bg-ink-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-500">
-                      em breve
-                    </span>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+        <NavList onNavigate={onNavigate} />
       </nav>
       <div className="border-t border-ink-200 p-4">
         <div className="rounded-xl bg-brand-950 p-4 text-white">
@@ -141,6 +150,39 @@ export function Sidebar() {
           </button>
         </div>
       </div>
-    </aside>
+    </>
+  );
+}
+
+export function Sidebar({ mobileOpen = false, onMobileClose }: SidebarProps) {
+  return (
+    <>
+      <aside className="hidden lg:flex lg:w-60 lg:flex-col lg:border-r lg:border-ink-200 lg:bg-surface">
+        <SidebarBody />
+      </aside>
+
+      <div
+        className={`fixed inset-0 z-40 lg:hidden ${
+          mobileOpen ? "" : "pointer-events-none"
+        }`}
+        aria-hidden={!mobileOpen}
+      >
+        <div
+          className={`absolute inset-0 bg-ink-950/40 backdrop-blur-sm transition-opacity ${
+            mobileOpen ? "opacity-100" : "opacity-0"
+          }`}
+          onClick={onMobileClose}
+        />
+        <aside
+          className={`absolute left-0 top-0 flex h-full w-72 flex-col border-r border-ink-200 bg-surface shadow-xl transition-transform ${
+            mobileOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
+          role="dialog"
+          aria-label="Menu"
+        >
+          <SidebarBody onNavigate={onMobileClose} />
+        </aside>
+      </div>
+    </>
   );
 }

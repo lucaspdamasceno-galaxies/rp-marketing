@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AppShell } from "@/components/layout/AppShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { InstagramEmbed } from "@/components/InstagramEmbed";
 import { LoadingState, ErrorState } from "@/components/ui/States";
 import { api, ApiError } from "@/lib/api";
 import { useApi } from "@/hooks/useApi";
@@ -89,14 +90,23 @@ function Detalhes({ postagem }: { postagem: Postagem }) {
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
-      <Card padded={false} className="overflow-hidden lg:col-span-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={postagem.url_midia}
-          alt={postagem.legenda ?? "Postagem"}
-          className="aspect-square w-full object-cover"
-        />
-      </Card>
+      <div className="flex justify-center lg:col-span-2">
+        {postagem.permalink ? (
+          <InstagramEmbed
+            permalink={postagem.permalink}
+            className="w-full max-w-[540px]"
+          />
+        ) : (
+          <Card padded={false} className="w-full overflow-hidden">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={postagem.url_midia}
+              alt={postagem.legenda ?? "Postagem"}
+              className="aspect-square w-full object-cover"
+            />
+          </Card>
+        )}
+      </div>
 
       <div className="flex flex-col gap-6 lg:col-span-3">
         <Card>
@@ -135,7 +145,6 @@ function Detalhes({ postagem }: { postagem: Postagem }) {
           <Stat label="Curtidas" value={postagem.curtidas} />
           <Stat label="Comentários" value={postagem.comentarios} />
           <Stat label="Alcance" value={postagem.alcance} />
-          <Stat label="Impressões" value={postagem.impressoes} />
           {isVideo && (
             <Stat label="Visualizações" value={postagem.visualizacoes} />
           )}

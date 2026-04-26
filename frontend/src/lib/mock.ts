@@ -41,7 +41,6 @@ function makePost(over: Partial<Postagem>): Postagem {
     comentarios: 0,
     visualizacoes: 0,
     alcance: 0,
-    impressoes: 0,
     data_publicacao: data,
     created_at: data,
     updated_at: data,
@@ -62,7 +61,6 @@ const POSTAGENS: Postagem[] = [
     comentarios: 132,
     visualizacoes: 24310,
     alcance: 18420,
-    impressoes: 22115,
     data_publicacao: diasAtras(2),
   }),
   makePost({
@@ -77,7 +75,6 @@ const POSTAGENS: Postagem[] = [
     comentarios: 78,
     visualizacoes: 0,
     alcance: 8420,
-    impressoes: 10231,
     data_publicacao: diasAtras(4),
   }),
   makePost({
@@ -91,7 +88,6 @@ const POSTAGENS: Postagem[] = [
     comentarios: 41,
     visualizacoes: 0,
     alcance: 5210,
-    impressoes: 6112,
     data_publicacao: diasAtras(6),
   }),
   makePost({
@@ -105,7 +101,6 @@ const POSTAGENS: Postagem[] = [
     comentarios: 198,
     visualizacoes: 31200,
     alcance: 22410,
-    impressoes: 27800,
     data_publicacao: diasAtras(9),
   }),
   makePost({
@@ -119,7 +114,6 @@ const POSTAGENS: Postagem[] = [
     comentarios: 22,
     visualizacoes: 0,
     alcance: 4120,
-    impressoes: 4890,
     data_publicacao: diasAtras(12),
   }),
   makePost({
@@ -133,7 +127,6 @@ const POSTAGENS: Postagem[] = [
     comentarios: 89,
     visualizacoes: 0,
     alcance: 9810,
-    impressoes: 11420,
     data_publicacao: diasAtras(15),
   }),
   makePost({
@@ -147,7 +140,6 @@ const POSTAGENS: Postagem[] = [
     comentarios: 154,
     visualizacoes: 28910,
     alcance: 19440,
-    impressoes: 23410,
     data_publicacao: diasAtras(18),
   }),
   makePost({
@@ -161,7 +153,6 @@ const POSTAGENS: Postagem[] = [
     comentarios: 38,
     visualizacoes: 0,
     alcance: 6010,
-    impressoes: 7220,
     data_publicacao: diasAtras(22),
   }),
 ];
@@ -176,6 +167,7 @@ export const mockDashboard: DashboardData = {
   },
   crescimento,
   ultimas_postagens: POSTAGENS.slice(0, 4),
+  last_sync_at: diasAtras(0),
 };
 
 export const mockPostagens: Postagem[] = POSTAGENS;
@@ -204,6 +196,8 @@ export const mockClientes: Cliente[] = [
     token_expires_at: diasAtras(-58),
     created_at: diasAtras(180),
     updated_at: diasAtras(1),
+    sync_cron: null,
+    last_sync_at: null,
   },
   {
     id: "c1",
@@ -217,6 +211,8 @@ export const mockClientes: Cliente[] = [
     token_expires_at: diasAtras(-50),
     created_at: diasAtras(120),
     updated_at: diasAtras(2),
+    sync_cron: null,
+    last_sync_at: null,
   },
   {
     id: "c2",
@@ -230,6 +226,8 @@ export const mockClientes: Cliente[] = [
     token_expires_at: null,
     created_at: diasAtras(40),
     updated_at: diasAtras(40),
+    sync_cron: null,
+    last_sync_at: null,
   },
   {
     id: "c3",
@@ -243,6 +241,8 @@ export const mockClientes: Cliente[] = [
     token_expires_at: diasAtras(-30),
     created_at: diasAtras(75),
     updated_at: diasAtras(7),
+    sync_cron: null,
+    last_sync_at: null,
   },
 ];
 
@@ -339,8 +339,8 @@ export function mockDashboardFor(clienteId: string): DashboardData {
       curtidas: scale(p.curtidas),
       comentarios: scale(p.comentarios),
       alcance: scale(p.alcance),
-      impressoes: scale(p.impressoes),
       visualizacoes: scale(p.visualizacoes),
     })),
+    last_sync_at: mockDashboard.last_sync_at,
   };
 }

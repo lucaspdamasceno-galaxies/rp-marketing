@@ -26,6 +26,10 @@ class Cliente(Base):
     access_token: Mapped[str | None] = mapped_column(String(1024), nullable=True)
     token_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    sync_cron: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    sync_scheduler_job: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    last_sync_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -39,4 +43,7 @@ class Cliente(Base):
     usuario: Mapped["Usuario"] = relationship("Usuario", back_populates="cliente")  # noqa: F821
     postagens: Mapped[list["Postagem"]] = relationship(  # noqa: F821
         "Postagem", back_populates="cliente", cascade="all, delete-orphan"
+    )
+    followers_snapshots: Mapped[list["FollowersSnapshot"]] = relationship(  # noqa: F821
+        "FollowersSnapshot", back_populates="cliente", cascade="all, delete-orphan"
     )

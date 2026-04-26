@@ -47,6 +47,8 @@ export type Cliente = {
   instagram_account_id: string | null;
   instagram_conectado: boolean;
   token_expires_at: string | null;
+  sync_cron: string | null;
+  last_sync_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -59,6 +61,13 @@ export type ConectarInstagramResponse = {
 
 export type SyncInstagramResponse = {
   postagens_novas: number;
+  followers: number;
+};
+
+export type SyncScheduleResponse = {
+  cliente_id: string;
+  cron: string | null;
+  scheduler_job: string | null;
 };
 
 export type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
@@ -106,7 +115,6 @@ export type Postagem = {
   comentarios: number;
   visualizacoes: number;
   alcance: number;
-  impressoes: number;
   data_publicacao: string;
   created_at: string;
   updated_at: string;
@@ -129,6 +137,7 @@ export type DashboardData = {
   resumo: DashboardResumo;
   crescimento: DashboardCrescimentoPonto[];
   ultimas_postagens: Postagem[];
+  last_sync_at: string | null;
 };
 
 export type OrdenarPostagensPor = "engajamento" | "data";
@@ -139,4 +148,9 @@ export type ListarPostagensParams = {
   ordenar_por?: OrdenarPostagensPor;
   page?: number;
   page_size?: number;
+};
+
+export type DashboardParams = {
+  periodo_inicio?: string;
+  periodo_fim?: string;
 };

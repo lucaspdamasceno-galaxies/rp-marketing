@@ -13,6 +13,7 @@ type TopbarProps = {
   title: string;
   subtitle?: string;
   userOverride?: DisplayUser;
+  onMenuClick?: () => void;
 };
 
 function iniciais(nome?: string | null): string {
@@ -23,7 +24,7 @@ function iniciais(nome?: string | null): string {
   return (first + last).toUpperCase() || "··";
 }
 
-export function Topbar({ title, subtitle, userOverride }: TopbarProps) {
+export function Topbar({ title, subtitle, userOverride, onMenuClick }: TopbarProps) {
   const router = useRouter();
   const { user: real } = useUser();
   const user = userOverride ?? real;
@@ -34,14 +35,38 @@ export function Topbar({ title, subtitle, userOverride }: TopbarProps) {
   }
 
   return (
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b border-ink-200 bg-surface/80 px-6 backdrop-blur lg:px-10">
-      <div className="min-w-0">
-        <h1 className="truncate text-lg font-semibold text-ink-950">{title}</h1>
-        {subtitle && (
-          <p className="truncate text-xs text-ink-500">{subtitle}</p>
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-3 border-b border-ink-200 bg-surface/80 px-4 backdrop-blur sm:px-6 lg:px-10">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+        {onMenuClick && (
+          <button
+            type="button"
+            onClick={onMenuClick}
+            className="-ml-1 inline-flex h-10 w-10 items-center justify-center rounded-lg text-ink-700 hover:bg-ink-100 lg:hidden"
+            aria-label="Abrir menu"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              className="h-6 w-6"
+              aria-hidden="true"
+            >
+              <path
+                d="M4 7h16M4 12h16M4 17h16"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
         )}
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold text-ink-950">{title}</h1>
+          {subtitle && (
+            <p className="truncate text-xs text-ink-500">{subtitle}</p>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <div className="hidden text-right sm:block">
           <p className="text-sm font-medium text-ink-950">
             {user?.nome ?? "—"}
