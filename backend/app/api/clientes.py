@@ -18,7 +18,7 @@ def listar_clientes(
     db: DbSession,
     q: str | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=500),
 ) -> Envelope[Page[ClienteOut]]:
     items, total = cliente_service.listar(db, q, page, page_size)
     return Envelope(

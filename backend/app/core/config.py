@@ -20,6 +20,18 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     API_V1_PREFIX: str = "/api/v1"
 
+    UPLOAD_DIR: str = "uploads"
+    MAX_UPLOAD_SIZE_MB: int = 50
+    PUBLIC_BASE_URL: str = "http://localhost:8000"
+
+    # Bucket público (mídias de aprovação e relatórios). Vazio = filesystem local.
+    GCS_BUCKET: str = ""
+    GCS_SIGNED_URL_TTL_MINUTES: int = 60
+
+    # Bucket privado para contratos (sem acesso público). Servido pelo backend
+    # via endpoint autenticado de download.
+    GCS_BUCKET_PRIVATE: str = ""
+
     # Cloud Scheduler — opcional em dev. Em produção precisam estar setados
     # para o agendamento por cliente funcionar.
     GCP_PROJECT_ID: str = ""

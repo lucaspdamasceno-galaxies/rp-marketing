@@ -70,7 +70,32 @@ export type SyncScheduleResponse = {
   scheduler_job: string | null;
 };
 
+export type TipoPostagem = "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL";
+
+// ----- Aprovações (Trello v2) -----
+
 export type StatusAprovacao = "pendente" | "aprovado" | "rejeitado";
+
+export type AprovacaoMidia = {
+  id: string;
+  ordem: number;
+  url: string;
+  mime_type: string;
+  tamanho_bytes: number;
+  nome_original: string;
+  created_at: string;
+};
+
+export type AprovacaoComentario = {
+  id: string;
+  aprovacao_id: string;
+  autor_id: string;
+  autor_nome: string | null;
+  autor_role: Role | null;
+  mensagem: string;
+  anexos_urls: string[];
+  created_at: string;
+};
 
 export type Aprovacao = {
   id: string;
@@ -78,30 +103,40 @@ export type Aprovacao = {
   cliente_nome_empresa: string | null;
   admin_id: string;
   admin_nome: string | null;
+  titulo: string;
   tipo: TipoPostagem;
-  url_midia: string;
   legenda: string | null;
   data_agendada: string | null;
-  status: StatusAprovacao;
-  comentario_revisao: string | null;
-  decidido_em: string | null;
+  status_texto: StatusAprovacao;
+  status_arte: StatusAprovacao;
+  decidido_texto_em: string | null;
+  decidido_arte_em: string | null;
+  postado_em: string | null;
+  midias: AprovacaoMidia[];
+  total_comentarios: number;
   created_at: string;
   updated_at: string;
 };
 
+export type AprovacaoDetail = Aprovacao & {
+  comentarios: AprovacaoComentario[];
+};
+
 export type AprovacaoCreate = {
   cliente_id: string;
+  titulo: string;
   tipo: TipoPostagem;
-  url_midia: string;
   legenda?: string | null;
   data_agendada?: string | null;
 };
+
+export type AprovacaoUpdate = Partial<Omit<AprovacaoCreate, "cliente_id">>;
 
 export type AprovacaoDecisao = {
   comentario?: string | null;
 };
 
-export type TipoPostagem = "IMAGE" | "VIDEO" | "CAROUSEL" | "REEL";
+// ----- Postagens / Dashboard -----
 
 export type Postagem = {
   id: string;
@@ -154,3 +189,189 @@ export type DashboardParams = {
   periodo_inicio?: string;
   periodo_fim?: string;
 };
+
+// ----- Tráfego pago -----
+
+export type DadosGoogleAds = {
+  custo?: number | null;
+  impressoes?: number | null;
+  cliques?: number | null;
+  ctr?: number | null;
+  cpc_medio?: number | null;
+  cpm_medio?: number | null;
+  campanhas?: Array<{
+    nome: string;
+    custo?: number | null;
+    impressoes?: number | null;
+    cliques?: number | null;
+    ctr?: number | null;
+    cpc_medio?: number | null;
+    conversoes?: number | null;
+  }>;
+};
+
+export type DadosMetaCampanha = {
+  nome: string;
+  resultados?: string | null;
+  custo_resultado?: string | null;
+  valor_investido?: number | null;
+  alcance?: number | null;
+  impressoes?: number | null;
+  ctr?: number | null;
+  cpc?: number | null;
+  cpm?: number | null;
+  frequencia?: number | null;
+};
+
+export type DadosMetaRegiao = {
+  nome: string;
+  alcance?: number | null;
+  impressoes?: number | null;
+  frequencia?: number | null;
+  valor_investido?: number | null;
+  cpm?: number | null;
+};
+
+export type DadosMetaAds = {
+  valor_investido?: number | null;
+  conversas?: number | null;
+  custo_conversa?: number | null;
+  impressoes?: number | null;
+  alcance?: number | null;
+  cliques_link?: number | null;
+  ctr_link?: number | null;
+  cpc_medio?: number | null;
+  campanhas?: DadosMetaCampanha[];
+  anuncios?: DadosMetaCampanha[];
+  regioes?: DadosMetaRegiao[];
+};
+
+export type DadosRelatorio = {
+  periodo?: { inicio: string; fim: string };
+  google_ads?: DadosGoogleAds;
+  meta_ads?: DadosMetaAds;
+};
+
+export type RelatorioTrafego = {
+  id: string;
+  cliente_id: string;
+  cliente_nome_empresa: string | null;
+  admin_id: string;
+  admin_nome: string | null;
+  periodo_inicio: string;
+  periodo_fim: string;
+  pdf_url: string | null;
+  pdf_nome_original: string | null;
+  dados: DadosRelatorio;
+  observacoes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type RelatorioTrafegoSerieItem = {
+  id: string;
+  periodo_inicio: string;
+  periodo_fim: string;
+  google_custo: number | null;
+  google_impressoes: number | null;
+  google_cliques: number | null;
+  google_ctr: number | null;
+  google_cpc: number | null;
+  meta_investido: number | null;
+  meta_alcance: number | null;
+  meta_impressoes: number | null;
+  meta_cliques_link: number | null;
+  meta_ctr_link: number | null;
+  meta_cpc: number | null;
+  meta_conversas: number | null;
+};
+
+export type RelatorioTrafegoDiff = {
+  anterior: RelatorioTrafegoSerieItem;
+  atual: RelatorioTrafegoSerieItem;
+  deltas: Record<string, number | null>;
+};
+
+// ----- Métricas mensais -----
+
+export type MetricasMensais = {
+  id: string;
+  cliente_id: string;
+  cliente_nome_empresa: string | null;
+  admin_id: string;
+  ano_mes: string;
+  seguidores: number;
+  seguidores_ganhos: number;
+  seguidores_perdidos: number;
+  alcance: number;
+  impressoes: number;
+  visualizacoes: number;
+  curtidas: number;
+  comentarios: number;
+  compartilhamentos: number;
+  salvamentos: number;
+  visitas_perfil: number;
+  cliques_site: number;
+  total_postagens: number;
+  total_stories: number;
+  total_reels: number;
+  observacoes: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type MetricasMensaisInput = Omit<
+  MetricasMensais,
+  | "id"
+  | "cliente_nome_empresa"
+  | "admin_id"
+  | "created_at"
+  | "updated_at"
+>;
+
+// ----- Contratos -----
+
+export type StatusContrato = "rascunho" | "ativo" | "encerrado" | "cancelado";
+
+export type ItemEscopoContrato =
+  | "trafego_pago"
+  | "gestao_redes_sociais"
+  | "producao_conteudo"
+  | "branding"
+  | "site"
+  | "consultoria";
+
+export type Contrato = {
+  id: string;
+  cliente_id: string;
+  cliente_nome_empresa: string | null;
+  admin_id: string;
+  admin_nome: string | null;
+  titulo: string;
+  escopo: string[];
+  descricao: string | null;
+  valor_mensal: string | null;
+  duracao_meses: number;
+  data_inicio: string;
+  data_fim: string;
+  status: StatusContrato;
+  pdf_url: string | null;
+  pdf_nome_original: string | null;
+  assinado_em_externo: string | null;
+  cancelado_em: string | null;
+  motivo_cancelamento: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+export type ContratoCreate = {
+  cliente_id: string;
+  titulo: string;
+  escopo: string[];
+  descricao?: string | null;
+  valor_mensal?: number | string | null;
+  duracao_meses: number;
+  data_inicio: string;
+};
+
+export type ContratoUpdate = Partial<Omit<ContratoCreate, "cliente_id">>;

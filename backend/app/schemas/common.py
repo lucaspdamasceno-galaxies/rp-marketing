@@ -15,4 +15,4 @@ class Page(BaseModel, Generic[T]):
     items: list[T]
     total: int
     page: int = Field(ge=1)
-    page_size: int = Field(ge=1, le=200)
+    page_size: int = Field(ge=1, le=500)

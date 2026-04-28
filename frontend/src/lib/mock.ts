@@ -250,62 +250,7 @@ export function findCliente(id: string): Cliente | undefined {
   return mockClientes.find((c) => c.id === id);
 }
 
-export const mockAprovacoes: Aprovacao[] = [
-  {
-    id: "a1",
-    cliente_id: "c1",
-    cliente_nome_empresa: "Studio Aurora",
-    admin_id: "u-admin",
-    admin_nome: "Equipe RP",
-    tipo: "IMAGE",
-    url_midia:
-      "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",
-    legenda:
-      "Bastidores do nosso último ensaio com a equipe ✨\n\nPropostas: 3 hashtags + CTA pra agendamento.",
-    data_agendada: diasAtras(-3),
-    status: "pendente",
-    comentario_revisao: null,
-    decidido_em: null,
-    created_at: diasAtras(1),
-    updated_at: diasAtras(1),
-  },
-  {
-    id: "a2",
-    cliente_id: "c1",
-    cliente_nome_empresa: "Studio Aurora",
-    admin_id: "u-admin",
-    admin_nome: "Equipe RP",
-    tipo: "REEL",
-    url_midia:
-      "https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?w=800&q=80",
-    legenda:
-      "Reel sobre tendências do mês. Áudio em alta + 3 cortes rápidos.",
-    data_agendada: diasAtras(-1),
-    status: "aprovado",
-    comentario_revisao: "Ficou ótimo, podem subir!",
-    decidido_em: diasAtras(2),
-    created_at: diasAtras(5),
-    updated_at: diasAtras(2),
-  },
-  {
-    id: "a3",
-    cliente_id: "c0",
-    cliente_nome_empresa: "RP Marketing",
-    admin_id: "u-admin",
-    admin_nome: "Equipe RP",
-    tipo: "CAROUSEL",
-    url_midia:
-      "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=800&q=80",
-    legenda: "Cases de cliente — versão 2 com 5 slides.",
-    data_agendada: null,
-    status: "rejeitado",
-    comentario_revisao:
-      "Trocar a foto do slide 3 — está muito escura. Ajustar copy do CTA também.",
-    decidido_em: diasAtras(3),
-    created_at: diasAtras(7),
-    updated_at: diasAtras(3),
-  },
-];
+export const mockAprovacoes: Aprovacao[] = [];
 
 export function findAprovacao(id: string): Aprovacao | undefined {
   return mockAprovacoes.find((a) => a.id === id);
