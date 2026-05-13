@@ -233,6 +233,11 @@ export default function AdminClientesPage() {
                               </Button>
                             </>
                           )}
+                          <Link href={`/admin/clientes/${c.id}/metricas`}>
+                            <Button variant="secondary" size="sm">
+                              Métricas
+                            </Button>
+                          </Link>
                           <Link href={`/admin/clientes/${c.id}`}>
                             <Button variant="secondary" size="sm">
                               Editar

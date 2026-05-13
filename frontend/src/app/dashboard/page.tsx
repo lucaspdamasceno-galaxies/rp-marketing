@@ -50,16 +50,34 @@ export default function DashboardPage() {
       title={primeiroNome ? `Olá, ${primeiroNome} 👋` : "Dashboard"}
       subtitle="Visão geral do seu Instagram"
     >
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 print:hidden">
         <PeriodoFiltro periodo={periodo} onChange={setPeriodo} />
-        {data?.last_sync_at && (
-          <p className="text-xs text-ink-500">
-            Última sincronização:{" "}
-            <span className="font-medium text-ink-700">
-              {formatRelative(data.last_sync_at)}
-            </span>
-          </p>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {data?.last_sync_at && (
+            <p className="text-xs text-ink-500">
+              Última sincronização:{" "}
+              <span className="font-medium text-ink-700">
+                {formatRelative(data.last_sync_at)}
+              </span>
+            </p>
+          )}
+          <button
+            type="button"
+            onClick={() => window.print()}
+            disabled={!data}
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-ink-200 bg-surface px-3 text-xs font-medium text-ink-700 transition hover:border-ink-300 hover:bg-ink-50 disabled:opacity-50"
+          >
+            <svg viewBox="0 0 24 24" fill="none" className="h-4 w-4">
+              <path
+                d="M6 9V4h12v5M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2M6 14h12v6H6z"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinejoin="round"
+              />
+            </svg>
+            Exportar PDF
+          </button>
+        </div>
       </div>
       {loading ? (
         <LoadingState label="Carregando dashboard…" />
@@ -105,28 +123,48 @@ function DashboardContent({
         <KpiCard
           label="Seguidores"
           value={data.resumo.followers}
+          delta={data.deltas?.followers?.percentual}
           context="Snapshot mais recente"
           icon={<IconUsers />}
         />
         <KpiCard
           label="Curtidas"
           value={data.resumo.total_curtidas}
+          delta={data.deltas?.curtidas?.percentual}
           context={`Soma ${periodoTexto.toLowerCase()}`}
           icon={<IconHeart />}
         />
         <KpiCard
           label="Comentários"
           value={data.resumo.total_comentarios}
+          delta={data.deltas?.comentarios?.percentual}
           context={`Soma ${periodoTexto.toLowerCase()}`}
           icon={<IconComment />}
         />
         <KpiCard
           label="Alcance"
           value={data.resumo.total_alcance}
+          delta={data.deltas?.alcance?.percentual}
           context={`Soma ${periodoTexto.toLowerCase()}`}
           icon={<IconReach />}
         />
       </section>
+
+      {data.campos_customizados.length > 0 && (
+        <section
+          aria-label="Métricas customizadas"
+          className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+        >
+          {data.campos_customizados.map((c) => (
+            <KpiCard
+              key={c.chave}
+              label={c.label}
+              value={c.valor}
+              context={c.sufixo ?? "Métrica customizada"}
+            />
+          ))}
+        </section>
+      )}
 
       <section
         aria-label="Crescimento de seguidores"

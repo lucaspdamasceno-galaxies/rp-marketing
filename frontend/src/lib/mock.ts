@@ -168,6 +168,15 @@ export const mockDashboard: DashboardData = {
   crescimento,
   ultimas_postagens: POSTAGENS.slice(0, 4),
   last_sync_at: diasAtras(0),
+  deltas: {
+    followers: { absoluto: 312, percentual: 2.5 },
+    curtidas: { absoluto: 184, percentual: 8.4 },
+    comentarios: { absoluto: -12, percentual: -3.1 },
+    alcance: { absoluto: 1240, percentual: 4.2 },
+    postagens: { absoluto: 2, percentual: 22.0 },
+  },
+  campos_customizados: [],
+  fonte: "auto",
 };
 
 export const mockPostagens: Postagem[] = POSTAGENS;
@@ -287,5 +296,8 @@ export function mockDashboardFor(clienteId: string): DashboardData {
       visualizacoes: scale(p.visualizacoes),
     })),
     last_sync_at: mockDashboard.last_sync_at,
+    deltas: mockDashboard.deltas,
+    campos_customizados: mockDashboard.campos_customizados,
+    fonte: mockDashboard.fonte,
   };
 }

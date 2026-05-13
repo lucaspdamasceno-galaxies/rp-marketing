@@ -73,3 +73,36 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+@media print {
+  @page {
+    margin: 1.5cm;
+  }
+  body {
+    background: white !important;
+  }
+  aside,
+  header,
+  .print\:hidden {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+  }
+  .shadow-sm,
+  .shadow-md,
+  .shadow-lg,
+  .shadow-xl,
+  .shadow-2xl {
+    box-shadow: none !important;
+  }
+  .rounded-xl,
+  .rounded-2xl {
+    border: 1px solid #e3e2ea !important;
+    break-inside: avoid;
+  }
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}

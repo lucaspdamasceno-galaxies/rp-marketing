@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -7,7 +8,8 @@ from app.api.deps import AdminUser, DbSession
 from app.schemas.cliente import ClienteCreate, ClienteOut, ClienteUpdate
 from app.schemas.common import Envelope, Page
 from app.schemas.dashboard import DashboardOut
-from app.services import cliente_service, dashboard_service
+from app.schemas.postagem import PostagemOut
+from app.services import cliente_service, dashboard_service, postagem_service
 
 router = APIRouter(prefix="/admin/clientes", tags=["admin/clientes"])
 
@@ -85,3 +87,51 @@ def dashboard_do_cliente(
             db, cliente.id, periodo_inicio=periodo_inicio, periodo_fim=periodo_fim
         )
     )
+
+
+@router.get(
+    "/{cliente_id}/postagens", response_model=Envelope[Page[PostagemOut]]
+)
+def listar_postagens_do_cliente(
+    cliente_id: UUID,
+    _: AdminUser,
+    db: DbSession,
+    periodo_inicio: datetime | None = Query(default=None),
+    periodo_fim: datetime | None = Query(default=None),
+    ordenar_por: Literal["data", "engajamento"] = Query(default="data"),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(20, ge=1, le=100),
+) -> Envelope[Page[PostagemOut]]:
+    cliente = cliente_service.buscar(db, cliente_id)
+    if not cliente:
+        raise HTTPException(status_code=404, detail="cliente não encontrado")
+    items, total = postagem_service.listar_do_cliente(
+        db, cliente.id, periodo_inicio, periodo_fim, ordenar_por, page, page_size
+    )
+    return Envelope(
+        data=Page[PostagemOut](
+            items=[PostagemOut.model_validate(p) for p in items],
+            total=total,
+            page=page,
+            page_size=page_size,
+        )
+    )
+
+
+@router.get(
+    "/{cliente_id}/postagens/{postagem_id}",
+    response_model=Envelope[PostagemOut],
+)
+def obter_postagem_do_cliente(
+    cliente_id: UUID,
+    postagem_id: UUID,
+    _: AdminUser,
+    db: DbSession,
+) -> Envelope[PostagemOut]:
+    cliente = cliente_service.buscar(db, cliente_id)
+    if not cliente:
+        raise HTTPException(status_code=404, detail="cliente não encontrado")
+    postagem = postagem_service.buscar_do_cliente(db, cliente.id, postagem_id)
+    if not postagem:
+        raise HTTPException(status_code=404, detail="postagem não encontrada")
+    return Envelope(data=PostagemOut.model_validate(postagem))

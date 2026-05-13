@@ -12,7 +12,7 @@ import { AuthShell } from "@/components/layout/AuthShell";
 import type { LoginResponse } from "@/types/api";
 
 const SEEDS = {
-  cliente: { email: "cliente1@teste.com", senha: "teste1234" },
+  cliente: { email: "teste-ig@rpmarketing.com.br", senha: "teste1234" },
   admin: { email: "admin@rpmarketing.com.br", senha: "admin12345" },
 };
 

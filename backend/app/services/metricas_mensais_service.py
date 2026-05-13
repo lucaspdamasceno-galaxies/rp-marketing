@@ -1,14 +1,13 @@
+from datetime import date
 from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import asc, desc, func, select
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.cliente import Cliente
 from app.models.metricas_mensais import MetricasMensais
 from app.schemas.metricas_mensais import (
-    MetricasMensaisBase,
     MetricasMensaisCreate,
     MetricasMensaisUpdate,
 )
@@ -27,9 +26,25 @@ def listar_por_cliente(
 ) -> list[MetricasMensais]:
     stmt = _base_query().where(MetricasMensais.cliente_id == cliente_id)
     if ordem == "asc":
-        stmt = stmt.order_by(asc(MetricasMensais.ano_mes))
+        stmt = stmt.order_by(asc(MetricasMensais.data_inicio))
     else:
-        stmt = stmt.order_by(desc(MetricasMensais.ano_mes))
+        stmt = stmt.order_by(desc(MetricasMensais.data_inicio))
+    return list(db.scalars(stmt).unique().all())
+
+
+def listar_no_periodo(
+    db: Session, cliente_id: UUID, periodo_inicio: date, periodo_fim: date
+) -> list[MetricasMensais]:
+    """Retorna registros que sobrepõem o período [periodo_inicio, periodo_fim]."""
+    stmt = (
+        _base_query()
+        .where(
+            MetricasMensais.cliente_id == cliente_id,
+            MetricasMensais.data_fim >= periodo_inicio,
+            MetricasMensais.data_inicio <= periodo_fim,
+        )
+        .order_by(asc(MetricasMensais.data_inicio))
+    )
     return list(db.scalars(stmt).unique().all())
 
 
@@ -42,18 +57,10 @@ def criar(
     metric = MetricasMensais(
         cliente_id=payload.cliente_id,
         admin_id=admin_id,
-        ano_mes=payload.ano_mes,
-        **payload.model_dump(exclude={"cliente_id", "ano_mes"}),
+        **payload.model_dump(exclude={"cliente_id"}),
     )
     db.add(metric)
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=409,
-            detail="já existem métricas para esse cliente nesse ano-mês — use PUT para atualizar",
-        )
+    db.commit()
     db.refresh(metric)
     return metric
 
@@ -73,32 +80,6 @@ def remover(db: Session, metric: MetricasMensais) -> None:
     db.commit()
 
 
-def upsert(
-    db: Session,
-    cliente_id: UUID,
-    ano_mes: str,
-    payload: MetricasMensaisBase,
-    admin_id: UUID,
-) -> MetricasMensais:
-    """Cria ou atualiza pelo par (cliente_id, ano_mes)."""
-    existente = db.scalar(
-        select(MetricasMensais)
-        .where(MetricasMensais.cliente_id == cliente_id)
-        .where(MetricasMensais.ano_mes == ano_mes)
-    )
-    if existente:
-        return atualizar(
-            db, existente, MetricasMensaisUpdate(**payload.model_dump())
-        )
-    return criar(
-        db,
-        MetricasMensaisCreate(
-            cliente_id=cliente_id, ano_mes=ano_mes, **payload.model_dump()
-        ),
-        admin_id,
-    )
-
-
 def total_por_cliente(db: Session, cliente_id: UUID) -> int:
     return (
         db.scalar(
@@ -116,7 +97,8 @@ def to_out_dict(m: MetricasMensais) -> dict:
         "cliente_id": m.cliente_id,
         "cliente_nome_empresa": m.cliente.nome_empresa if m.cliente else None,
         "admin_id": m.admin_id,
-        "ano_mes": m.ano_mes,
+        "data_inicio": m.data_inicio,
+        "data_fim": m.data_fim,
         "seguidores": m.seguidores,
         "seguidores_ganhos": m.seguidores_ganhos,
         "seguidores_perdidos": m.seguidores_perdidos,
@@ -133,6 +115,7 @@ def to_out_dict(m: MetricasMensais) -> dict:
         "total_stories": m.total_stories,
         "total_reels": m.total_reels,
         "observacoes": m.observacoes,
+        "campos_customizados": m.campos_customizados or [],
         "created_at": m.created_at,
         "updated_at": m.updated_at,
     }

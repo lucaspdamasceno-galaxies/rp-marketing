@@ -168,11 +168,29 @@ export type DashboardCrescimentoPonto = {
   followers: number;
 };
 
+export type DeltaMetrica = {
+  absoluto: number;
+  percentual: number;
+};
+
+export type CampoCustomizado = {
+  chave: string;
+  label: string;
+  valor: number;
+  sufixo?: string | null;
+};
+
 export type DashboardData = {
   resumo: DashboardResumo;
+  deltas: Record<
+    "followers" | "curtidas" | "comentarios" | "alcance" | "postagens",
+    DeltaMetrica
+  >;
   crescimento: DashboardCrescimentoPonto[];
   ultimas_postagens: Postagem[];
   last_sync_at: string | null;
+  campos_customizados: CampoCustomizado[];
+  fonte: "auto" | "manual";
 };
 
 export type OrdenarPostagensPor = "engajamento" | "data";
@@ -299,7 +317,8 @@ export type MetricasMensais = {
   cliente_id: string;
   cliente_nome_empresa: string | null;
   admin_id: string;
-  ano_mes: string;
+  data_inicio: string;
+  data_fim: string;
   seguidores: number;
   seguidores_ganhos: number;
   seguidores_perdidos: number;
@@ -316,6 +335,7 @@ export type MetricasMensais = {
   total_stories: number;
   total_reels: number;
   observacoes: string | null;
+  campos_customizados: CampoCustomizado[];
   created_at: string;
   updated_at: string;
 };

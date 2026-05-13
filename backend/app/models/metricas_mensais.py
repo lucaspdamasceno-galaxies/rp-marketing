@@ -1,13 +1,16 @@
-"""Métricas mensais de redes sociais — inseridas manualmente pelo admin.
+"""Métricas manuais de redes sociais — inseridas pelo admin em qualquer período.
 
-Cada registro representa um snapshot consolidado de um mês (ano_mes = 'YYYY-MM').
-Permite ao cliente acompanhar crescimento mês a mês mesmo sem integração com Instagram.
+Cada registro representa um snapshot consolidado dentro do range
+[data_inicio, data_fim]. Permite ao cliente acompanhar desempenho sem
+integração com Instagram, em qualquer granularidade (dia, semana, mês,
+campanha específica, etc.).
 """
 import uuid
-from datetime import datetime
+from datetime import date, datetime
+from typing import Any
 
-from sqlalchemy import BigInteger, DateTime, ForeignKey, Integer, String, Text, UniqueConstraint, func
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, Integer, Text, func, text
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -15,9 +18,6 @@ from app.db.base import Base
 
 class MetricasMensais(Base):
     __tablename__ = "metricas_mensais"
-    __table_args__ = (
-        UniqueConstraint("cliente_id", "ano_mes", name="uq_metricas_cliente_ano_mes"),
-    )
 
     id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -34,7 +34,8 @@ class MetricasMensais(Base):
         nullable=False,
     )
 
-    ano_mes: Mapped[str] = mapped_column(String(7), nullable=False, index=True)
+    data_inicio: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    data_fim: Mapped[date] = mapped_column(Date, nullable=False, index=True)
 
     seguidores: Mapped[int] = mapped_column(BigInteger, nullable=False, default=0)
     seguidores_ganhos: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
@@ -53,6 +54,10 @@ class MetricasMensais(Base):
     total_reels: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     observacoes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    campos_customizados: Mapped[list[dict[str, Any]]] = mapped_column(
+        JSONB, nullable=False, server_default=text("'[]'::jsonb"), default=list
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

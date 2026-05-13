@@ -1,10 +1,14 @@
-import re
-from datetime import datetime
+from datetime import date, datetime
 from uuid import UUID
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, model_validator
 
-ANO_MES_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+class CampoCustomizado(BaseModel):
+    chave: str = Field(min_length=1, max_length=64)
+    label: str = Field(min_length=1, max_length=128)
+    valor: float
+    sufixo: str | None = Field(default=None, max_length=16)
 
 
 class MetricasMensaisBase(BaseModel):
@@ -24,22 +28,34 @@ class MetricasMensaisBase(BaseModel):
     total_stories: int = Field(default=0, ge=0)
     total_reels: int = Field(default=0, ge=0)
     observacoes: str | None = Field(default=None, max_length=4000)
+    campos_customizados: list[CampoCustomizado] = Field(default_factory=list)
 
 
 class MetricasMensaisCreate(MetricasMensaisBase):
     cliente_id: UUID
-    ano_mes: str = Field(..., description="Formato YYYY-MM, ex.: 2026-04")
+    data_inicio: date
+    data_fim: date
 
-    @field_validator("ano_mes")
-    @classmethod
-    def _valida_ano_mes(cls, v: str) -> str:
-        if not ANO_MES_RE.match(v):
-            raise ValueError("ano_mes deve estar no formato YYYY-MM")
-        return v
+    @model_validator(mode="after")
+    def _valida_periodo(self) -> "MetricasMensaisCreate":
+        if self.data_fim < self.data_inicio:
+            raise ValueError("data_fim deve ser maior ou igual a data_inicio")
+        return self
 
 
 class MetricasMensaisUpdate(MetricasMensaisBase):
-    pass
+    data_inicio: date | None = None
+    data_fim: date | None = None
+
+    @model_validator(mode="after")
+    def _valida_periodo(self) -> "MetricasMensaisUpdate":
+        if (
+            self.data_inicio
+            and self.data_fim
+            and self.data_fim < self.data_inicio
+        ):
+            raise ValueError("data_fim deve ser maior ou igual a data_inicio")
+        return self
 
 
 class MetricasMensaisOut(MetricasMensaisBase):
@@ -47,6 +63,7 @@ class MetricasMensaisOut(MetricasMensaisBase):
     cliente_id: UUID
     cliente_nome_empresa: str | None = None
     admin_id: UUID
-    ano_mes: str
+    data_inicio: date
+    data_fim: date
     created_at: datetime
     updated_at: datetime
